@@ -1,0 +1,12 @@
+  File "/home/brysen/projects/myscripts/check_schedule.py", line 214
+    msg = EmailMessage()
+                        ^
+IndentationError: unindent does not match any outer indentation level
+  File "/home/brysen/projects/myscripts/check_schedule.py", line 214
+    msg = EmailMessage()
+                        ^
+IndentationError: unindent does not match any outer indentation level
+  File "/home/brysen/projects/myscripts/check_schedule.py", line 214
+    msg = EmailMessage()
+                        ^
+IndentationError: unindent does not match any outer indentation level
