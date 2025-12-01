@@ -257,6 +257,8 @@ def main():
     download_pdf()
     if not has_pdf_changed():
         return
+    with open("/home/brysen/projects/myscripts/cron_log.txt", "a") as f:
+        f.write(f"pdf changed at {datetime.now()}\n")
     text = extract_text()
     events = parse_schedule(text)
     if events:
