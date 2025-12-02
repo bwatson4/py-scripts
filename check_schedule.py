@@ -35,7 +35,10 @@ CALENDAR_INDEX = 1
 # Email Notification Setup
 from_email_addr = "raspberry44hugh@gmail.com"
 from_email_pass = "lcyb kjcl uksd ltkg"
-to_email_addr   = "watson.bm4@gmail.com"
+to_email_addr   = [
+    "watson.bm4@gmail.com",
+    "katiegregson8@gmail.com",
+]
 
 PDF_PATH  = "/home/brysen/projects/myscripts/schedule.pdf"
 HASH_PATH = "/home/brysen/projects/myscripts/schedule.hash"
@@ -254,7 +257,7 @@ def send_email(events=None):
 
     msg.set_content(body)
     msg["From"] = from_email_addr
-    msg["To"] = to_email_addr
+    msg["To"] = ", ".join(to_email_addr)
     msg["Subject"] = "KVA Schedule Updated"
 
     # attach PDF
