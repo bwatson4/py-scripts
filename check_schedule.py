@@ -13,14 +13,15 @@ import uuid
 import io
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-
-#for email
 import smtplib
 from email.message import EmailMessage
 
+LOG_FILE = "/home/brysen/projects/myscripts/cron_log.txt"
 
-with open("/home/brysen/projects/myscripts/cron_log.txt", "a") as f:
-    f.write(f"Script started at {datetime.now()}\n")
+def log(msg):
+    with open(LOG_FILE, "a") as f:
+        f.write(f"{datetime.now()}: {msg}\n")
+
 
 # ====== CONFIGURATION ======
 PAGE_URL = "https://kvapack.ca/adult-indoor/"
@@ -32,9 +33,9 @@ ICLOUD_APP_PASSWORD = "xokj-olky-xpuc-xspw"
 CALENDAR_INDEX = 1
 
 # Email Notification Setup
-from_email_addr ="raspberry44hugh@gmail.com"
+from_email_addr = "raspberry44hugh@gmail.com"
 from_email_pass = "lcyb kjcl uksd ltkg"
-to_email_addr   ="watson.bm4@gmail.com"
+to_email_addr   = "watson.bm4@gmail.com"
 
 PDF_PATH  = "/home/brysen/projects/myscripts/schedule.pdf"
 HASH_PATH = "/home/brysen/projects/myscripts/schedule.hash"
@@ -50,68 +51,38 @@ HEADERS = {
     )
 }
 
-# ====== DISCOVER SCHEDULE PDF BY CONTENT ======
-def discover_wednesday_pdf(page_url=PAGE_URL):
-    """
-    Attempts the following in order:
-    1. Find PDF containing BOTH 'wednesday' and 'chewblockas'
-    2. If none found, find PDF containing 'wednesday schedule will be posted on'
-    3. Otherwise return None
-    """
-
+# ====== GET WEDNESDAY PDF URL ======
+def get_wednesday_pdf_url(page_url=PAGE_URL):
+    """Parse the Adult Indoor page to find the Wednesday Night PDF link."""
     resp = requests.get(page_url, headers=HEADERS)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
 
-    pdf_links = []
-    for a in soup.find_all("a", href=True):
-        href = a["href"]
-        if ".pdf" in href.lower():
-            pdf_links.append(urljoin(page_url, href))
+    # Find any <h1> containing "Wednesday Night" in its text (ignoring nested tags)
+    h1 = None
+    for candidate in soup.find_all("h1"):
+        if "wednesday night" in candidate.get_text(strip=True).lower():
+            h1 = candidate
+            break
 
-    # Terms required for STRONG match
-    strong_terms = ["wednesday", "chewblockas"]
+    if not h1:
+        log("Could not find Wednesday Night section on page.")
+        return None
 
-    # Fallback phrase
-    fallback_phrase = "wednesday schedule will be posted on"
+    # Look for the parent div with class 'fl-rich-text' that contains the PDF link
+    parent_div = h1.find_parent("div", class_="fl-rich-text")
+    if not parent_div:
+        log("Could not find parent div containing PDF link.")
+        return None
 
-    strong_matches = []
-    fallback_matches = []
+    # Find <a> link containing "Click Here"
+    link = parent_div.find("a", string=re.compile("Click Here", re.I))
+    if not link:
+        log("Could not find PDF link in Wednesday Night section.")
+        return None
 
-    for pdf_url in pdf_links:
-        try:
-            r = requests.get(pdf_url, headers=HEADERS)
-            r.raise_for_status()
-
-            with pdfplumber.open(io.BytesIO(r.content)) as pdf:
-                text = "\n".join(
-                    (page.extract_text() or "") for page in pdf.pages
-                ).lower()
-
-            # Check strong match: BOTH terms required
-            if all(term in text for term in strong_terms):
-                strong_matches.append(pdf_url)
-
-            # Check fallback match
-            if fallback_phrase in text:
-                fallback_matches.append(pdf_url)
-
-        except Exception as e:
-            with open("/home/brysen/projects/myscripts/cron_log.txt", "a") as f:
-                f.write(f"Error scanning PDF {pdf_url}: {e}\n")
-
-    # Priority #1 — strong match
-    if strong_matches:
-        return strong_matches[0]
-
-    # Priority #2 — fallback match
-    if fallback_matches:
-        return fallback_matches[0]
-
-    # No match
-    return None
-
-
+    pdf_url = urljoin(page_url, link["href"])
+    return pdf_url
 
 # ====== UTILITIES ======
 def to_24h_str(tstr):
@@ -148,7 +119,6 @@ def extract_text(pdf_path=PDF_PATH):
         for page in pdf.pages:
             text += (page.extract_text() or "") + "\n"
     return text
-
 
 # ====== PARSING ======
 def parse_schedule(text, team_name=TEAM_NAME):
@@ -237,7 +207,6 @@ def parse_schedule(text, team_name=TEAM_NAME):
 
     return events
 
-
 # ====== CALDAV / ICLOUD ======
 def add_events_to_calendar(events):
     client = DAVClient(
@@ -267,26 +236,31 @@ def add_events_to_calendar(events):
         cal.add_component(ev)
         calendar.add_event(cal.to_ical())
 
-
-def send_email(events):
+# ====== EMAIL ======
+def send_email(events=None):
     msg = EmailMessage()
-    event = events[0]
 
-    summary = event['summary']
-    description = event['description']
-    start_time = event['start'].strftime("%Y-%m-%d %H:%M")
-    end_time   = event['end'].strftime("%Y-%m-%d %H:%M")
+    # Determine body
+    if events:
+        event = events[0]
+        body = (
+            f"Event Summary: {event['summary']}\n"
+            f"Details: {event['description']}\n\n"
+            f"Start: {event['start'].strftime('%Y-%m-%d %H:%M')}\n"
+            f"End:   {event['end'].strftime('%Y-%m-%d %H:%M')}\n"
+        )
+    else:
+        body = extract_text(PDF_PATH)
 
-    msg.set_content(
-        f"Event Summary: {summary}\n"
-        f"Details: {description}\n\n"
-        f"Start: {start_time}\n"
-        f"End:   {end_time}"
-    )
-
+    msg.set_content(body)
     msg["From"] = from_email_addr
-    msg["To"]   = to_email_addr
+    msg["To"] = to_email_addr
     msg["Subject"] = "KVA Schedule Updated"
+
+    # attach PDF
+    with open(PDF_PATH, "rb") as f:
+        pdf_data = f.read()
+    msg.add_attachment(pdf_data, maintype="application", subtype="pdf", filename=os.path.basename(PDF_PATH))
 
     server = smtplib.SMTP("smtp.gmail.com", 587)
     server.starttls()
@@ -294,29 +268,27 @@ def send_email(events):
     server.send_message(msg)
     server.quit()
 
-
 # ====== MAIN ======
 def main():
-    pdf_url = discover_wednesday_pdf()
-
+    pdf_url = get_wednesday_pdf_url()
     if not pdf_url:
         return
-    # print(f"found wednesday pdf: {pdf_url}")
+
     download_pdf(pdf_url)
 
     if not has_pdf_changed():
         return
 
-    with open("/home/brysen/projects/myscripts/cron_log.txt", "a") as f:
-        f.write(f"Schedule changed at {datetime.now()}\n")
+    log(f"Schedule changed, sending email")
 
     text = extract_text()
     events = parse_schedule(text)
 
     if events:
         add_events_to_calendar(events)
-        send_email(events)
 
+    send_email(events if events else None)
 
 if __name__ == "__main__":
+    log("Script started")
     main()
