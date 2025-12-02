@@ -64,7 +64,7 @@ def find_schedule_pdfs(page_url, filter_keywords=None):
 if __name__ == "__main__":
     url = "https://kvapack.ca/adult-indoor/"
     # e.g. to try to get Wednesday PDFs:
-    wednesday_pdfs = find_schedule_pdfs(url, filter_keywords=["wed", "wednesday", "wednesday night"])
-    print("Found Wednesday-related PDFs:")
+    wednesday_pdfs = find_schedule_pdfs(url)
+    print("Found PDFs:")
     for pdf in wednesday_pdfs:
         print(f"{pdf}")
