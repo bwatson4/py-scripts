@@ -1,6 +1,7 @@
-cron_log.txt
-cron_output.log
-check_schedule.log
+*.txt
+*.log
 schedule
 schedule.hash
 schedule.pdf
+venv/
+__pycache__/
