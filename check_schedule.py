@@ -300,10 +300,8 @@ def main():
     pdf_url = discover_wednesday_pdf()
 
     if not pdf_url:
-        with open("/home/brysen/projects/myscripts/cron_log.txt", "a") as f:
-            f.write("No Wednesday PDF found on the page.\n")
         return
-    print(f"found wednesday pdf: {pdf_url}")
+    # print(f"found wednesday pdf: {pdf_url}")
     download_pdf(pdf_url)
 
     if not has_pdf_changed():
