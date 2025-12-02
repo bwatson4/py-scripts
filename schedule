@@ -12,6 +12,14 @@ from caldav import DAVClient
 from icalendar import Calendar, Event, Alarm
 import uuid
 
+#for email
+import smtplib
+from email.message import EmailMessage
+
+
+with open("/home/brysen/projects/myscripts/cron_log.txt", "a") as f:
+    f.write(f"Script started at {datetime.now()}\n")
+
 # ====== CONFIGURATION ======
 PDF_URL = "https://kvapack.ca/wp-content/uploads/sites/3620/2025/11/Adult-Indoor-Schedule-2025_2026-Website-Schedule-43.pdf"
 TEAM_NAME = "Chewblockas"
@@ -21,8 +29,14 @@ ICLOUD_USERNAME = "watson.bm4@gmail.com"
 ICLOUD_APP_PASSWORD = "xokj-olky-xpuc-xspw"
 CALENDAR_INDEX = 1
 
-PDF_PATH = "schedule.pdf"
-HASH_PATH = "schedule.hash"
+# Email Notification Setup
+#Set the sender email and password and recipient emaiç
+from_email_addr ="raspberry44hugh@gmail.com"
+from_email_pass = "lcyb kjcl uksd ltkg"
+to_email_addr ="watson.bm4@gmail.com"
+
+PDF_PATH = "/home/brysen/projects/myscripts/schedule.pdf"
+HASH_PATH = "/home/brysen/projects/myscripts/schedule.hash"
 
 GYMS = ["KCS", "TCC", "OLPH", "PACWAY"]
 POOLS = [f"{c} POOL" for c in "ABCDEFGH"]
@@ -91,7 +105,7 @@ def parse_schedule(text, team_name=TEAM_NAME):
                 break
 
         # Detect date
-        date_match = re.search(r"([A-Z][a-z]+ \d{1,2}, 2025)", line)
+        date_match = re.search(r"([A-Z][a-z]+ \d{1,2}, \d{4})", line)
         if date_match:
             try:
                 current_date = datetime.strptime(date_match.group(1), "%B %d, %Y").date()
@@ -193,15 +207,63 @@ def add_events_to_calendar(events):
         cal.add_component(ical_event)
         calendar.add_event(cal.to_ical())
 
+
+def send_email(events, **kwargs):
+    """Send an email with details about the events"""
+    # Create a message object
+    msg = EmailMessage()
+    event = events[0]
+
+    summary = event['summary']
+    description = event['description']
+    start_time = event['start'].strftime("%Y-%m-%d %H:%M")
+    end_time = event['end'].strftime("%Y-%m-%d %H:%M")
+
+    # Set the email body
+    body = f"""
+        Event Summary: {summary}
+        Details: {description}
+
+        Start: {start_time}
+        End:   {end_time}
+    """
+    msg.set_content(body)
+
+    # Set sender and recipient
+    msg['From'] = from_email_addr
+    msg['To'] = to_email_addr
+
+    # Set your email subject
+    msg['Subject'] = 'KVA Schedule Updated'
+
+    # Connecting to server and sending email
+    # Edit the following line with your provider's SMTP server details
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+
+    # Comment out the next line if your email provider doesn't use TLS
+    server.starttls()
+    # Login to the SMTP server
+    server.login(from_email_addr, from_email_pass)
+
+    # Send the message
+    server.send_message(msg)
+
+    # print('Email sent')
+    #Disconnect from the Server
+    server.quit()
+
 # ====== MAIN ======
 def main():
     download_pdf()
     if not has_pdf_changed():
         return
+    with open("/home/brysen/projects/myscripts/cron_log.txt", "a") as f:
+        f.write(f"pdf changed at {datetime.now()}\n")
     text = extract_text()
     events = parse_schedule(text)
     if events:
         add_events_to_calendar(events)
-
+        send_email(events)
+        
 if __name__ == "__main__":
     main()
