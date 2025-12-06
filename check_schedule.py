@@ -16,43 +16,11 @@ from urllib.parse import urljoin
 import smtplib
 from email.message import EmailMessage
 
-LOG_FILE = "/home/brysen/projects/myscripts/cron_log.txt"
+import config
+from utils import log, to_24h_str
 
-def log(msg):
-    with open(LOG_FILE, "a") as f:
-        f.write(f"{datetime.now()}: {msg}\n")
-
-
-# ====== CONFIGURATION ======
-PAGE_URL = "https://kvapack.ca/adult-indoor/"
-TEAM_NAME = "Chewblockas"
-
-# iCloud credentials
-ICLOUD_USERNAME = "watson.bm4@gmail.com"
-ICLOUD_APP_PASSWORD = "xokj-olky-xpuc-xspw"
-CALENDAR_INDEX = 1
-
-# Email Notification Setup
-from_email_addr = "raspberry44hugh@gmail.com"
-from_email_pass = "lcyb kjcl uksd ltkg"
-to_email_addr   = "watson.bm4@gmail.com"
-
-PDF_PATH  = "/home/brysen/projects/myscripts/schedule.pdf"
-HASH_PATH = "/home/brysen/projects/myscripts/schedule.hash"
-
-GYMS  = ["KCS", "TCC", "OLPH", "PACWAY"]
-POOLS = [f"{c} POOL" for c in "ABCDEFGH"]
-
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/117.0.0.0 Safari/537.36"
-    )
-}
-
-# ====== GET WEDNESDAY PDF URL ======
-def get_wednesday_pdf_url(page_url=PAGE_URL):
+# ====== GET PDF URL ======
+def get_wednesday_pdf_url(page_url=PAGE_URL, KEYWORD="Wednesday Night"):
     """Parse the Adult Indoor page to find the Wednesday Night PDF link."""
     resp = requests.get(page_url, headers=HEADERS)
     resp.raise_for_status()
@@ -61,12 +29,12 @@ def get_wednesday_pdf_url(page_url=PAGE_URL):
     # Find any <h1> containing "Wednesday Night" in its text (ignoring nested tags)
     h1 = None
     for candidate in soup.find_all("h1"):
-        if "wednesday night" in candidate.get_text(strip=True).lower():
+        if KEYWORD in candidate.get_text(strip=True).lower():
             h1 = candidate
             break
 
     if not h1:
-        log("Could not find Wednesday Night section on page.")
+        log(f"Could not find {KEYWORD} section on page.")
         return None
 
     # Look for the parent div with class 'fl-rich-text' that contains the PDF link
@@ -78,18 +46,12 @@ def get_wednesday_pdf_url(page_url=PAGE_URL):
     # Find <a> link containing "Click Here"
     link = parent_div.find("a", string=re.compile("Click Here", re.I))
     if not link:
-        log("Could not find PDF link in Wednesday Night section.")
+        log(f"Could not find PDF link in {KEYWORD} section.")
         return None
 
     pdf_url = urljoin(page_url, link["href"])
     return pdf_url
 
-# ====== UTILITIES ======
-def to_24h_str(tstr):
-    h, m = map(int, tstr.split(":"))
-    if h < 12:
-        h += 12
-    return f"{h:02d}:{m:02d}"
 
 def download_pdf(url, path=PDF_PATH):
     resp = requests.get(url, headers=HEADERS)

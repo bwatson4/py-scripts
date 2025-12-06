@@ -11,8 +11,42 @@ LOG_DIR = BASE_DIR / "logs"
 # App settings
 ENABLE_LOGGING = True
 
+PAGE_URL = "https://kvapack.ca/adult-indoor/"
+TEAM_NAME = "Chewblockas"
+KEYWORD = "Wednesday Night"
+
 # Ensure folders exist
 for folder in (CACHE_DIR, PDF_DIR, LOG_DIR):
     folder.mkdir(parents=True, exist_ok=True)
 
-LOG_FILE = BASE_DIR / "cron_log.txt"
+ # File Setup
+LOG_FILE = LOG_DIR / "cron_log.txt"
+
+PDF_FILE = PDF_DIR / "schedule.pdf"
+PDF_HASH_FILE = PDF_DIR / "schedule.hash"
+
+
+
+# iCloud credentials
+ICLOUD_USERNAME = "watson.bm4@gmail.com"
+ICLOUD_APP_PASSWORD = "xokj-olky-xpuc-xspw"
+CALENDAR_INDEX = 1
+
+# Email Notification Setup
+from_email_addr = "raspberry44hugh@gmail.com"
+from_email_pass = "lcyb kjcl uksd ltkg"
+to_email_addr   = [
+    "watson.bm4@gmail.com",
+    "katiegregson8@gmail.com"
+]
+
+GYMS  = ["KCS", "TCC", "OLPH", "PACWAY", "VALLEYVIEW SS"]
+POOLS = [f"{c} POOL" for c in "ABCDEFGH"]
+
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/117.0.0.0 Safari/537.36"
+    )
+}

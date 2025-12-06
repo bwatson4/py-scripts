@@ -1,4 +1,4 @@
-from fetcher.pdf_fetcher import PDFFetcher
+from src.fetcher import PDFFetcher
 from parser.schedule_parser import ScheduleParser
 from calendar.ical_client import ICloudCalendar
 from notifier.emailer import Emailer
