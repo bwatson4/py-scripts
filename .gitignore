@@ -4,4 +4,5 @@ schedule
 schedule.hash
 schedule.pdf
 venv/
+.venv/
 __pycache__/
