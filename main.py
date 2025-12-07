@@ -12,11 +12,7 @@ def main():
     # calendar = ICloudCalendar()
     # mailer = Emailer()
 
-    url = fetcher.get_pdf_url()
-    if not url:
-        log("No PDF URL found.")
-        return
-
+    fetcher.get_pdf_url()
     fetcher.download_pdf()
 
     # if not fetcher.has_changed():

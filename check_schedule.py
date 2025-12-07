@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 
 # check_schedule.py
-import os
-import hashlib
-import re
-from datetime import datetime, timedelta
-import requests
-import pdfplumber
-from caldav import DAVClient
+import os #fethcer
+import hashlib #fetcher
+import re #fetcher
+from datetime import datetime, timedelta #utils
+import requests # fetcher
+import pdfplumber #fetcher
+from caldav import DAVClient #
 from icalendar import Calendar, Event, Alarm
 import uuid
 import io
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+from bs4 import BeautifulSoup #fetcher
+from urllib.parse import urljoin #fetcher
 import smtplib
 from email.message import EmailMessage
 
@@ -20,67 +20,67 @@ import config
 from utils import log, to_24h_str
 
 # ====== GET PDF URL ======
-def get_wednesday_pdf_url(page_url=PAGE_URL, KEYWORD="Wednesday Night"):
-    """Parse the Adult Indoor page to find the Wednesday Night PDF link."""
-    resp = requests.get(page_url, headers=HEADERS)
-    resp.raise_for_status()
-    soup = BeautifulSoup(resp.text, "html.parser")
+# def get_wednesday_pdf_url(page_url=PAGE_URL, KEYWORD="Wednesday Night"):
+#     """Parse the Adult Indoor page to find the Wednesday Night PDF link."""
+#     resp = requests.get(page_url, headers=HEADERS)
+#     resp.raise_for_status()
+#     soup = BeautifulSoup(resp.text, "html.parser")
 
-    # Find any <h1> containing "Wednesday Night" in its text (ignoring nested tags)
-    h1 = None
-    for candidate in soup.find_all("h1"):
-        if KEYWORD in candidate.get_text(strip=True).lower():
-            h1 = candidate
-            break
+#     # Find any <h1> containing "Wednesday Night" in its text (ignoring nested tags)
+#     h1 = None
+#     for candidate in soup.find_all("h1"):
+#         if KEYWORD in candidate.get_text(strip=True).lower():
+#             h1 = candidate
+#             break
 
-    if not h1:
-        log(f"Could not find {KEYWORD} section on page.")
-        return None
+#     if not h1:
+#         log(f"Could not find {KEYWORD} section on page.")
+#         return None
 
-    # Look for the parent div with class 'fl-rich-text' that contains the PDF link
-    parent_div = h1.find_parent("div", class_="fl-rich-text")
-    if not parent_div:
-        log("Could not find parent div containing PDF link.")
-        return None
+#     # Look for the parent div with class 'fl-rich-text' that contains the PDF link
+#     parent_div = h1.find_parent("div", class_="fl-rich-text")
+#     if not parent_div:
+#         log("Could not find parent div containing PDF link.")
+#         return None
 
-    # Find <a> link containing "Click Here"
-    link = parent_div.find("a", string=re.compile("Click Here", re.I))
-    if not link:
-        log(f"Could not find PDF link in {KEYWORD} section.")
-        return None
+#     # Find <a> link containing "Click Here"
+#     link = parent_div.find("a", string=re.compile("Click Here", re.I))
+#     if not link:
+#         log(f"Could not find PDF link in {KEYWORD} section.")
+#         return None
 
-    pdf_url = urljoin(page_url, link["href"])
-    return pdf_url
+#     pdf_url = urljoin(page_url, link["href"])
+#     return pdf_url
 
 
-def download_pdf(url, path=PDF_PATH):
-    resp = requests.get(url, headers=HEADERS)
-    resp.raise_for_status()
-    with open(path, "wb") as fh:
-        fh.write(resp.content)
-    return path
+# def download_pdf(url, path=PDF_PATH):
+#     resp = requests.get(url, headers=HEADERS)
+#     resp.raise_for_status()
+#     with open(path, "wb") as fh:
+#         fh.write(resp.content)
+#     return path
 
-def has_pdf_changed(path=PDF_PATH, hash_path=HASH_PATH):
-    if not os.path.exists(path):
-        return True
-    with open(path, "rb") as fh:
-        new_hash = hashlib.md5(fh.read()).hexdigest()
-    old_hash = None
-    if os.path.exists(hash_path):
-        with open(hash_path, "r") as fh:
-            old_hash = fh.read().strip()
-    if new_hash == old_hash:
-        return False
-    with open(hash_path, "w") as fh:
-        fh.write(new_hash)
-    return True
+# def has_pdf_changed(path=PDF_PATH, hash_path=HASH_PATH):
+#     if not os.path.exists(path):
+#         return True
+#     with open(path, "rb") as fh:
+#         new_hash = hashlib.md5(fh.read()).hexdigest()
+#     old_hash = None
+#     if os.path.exists(hash_path):
+#         with open(hash_path, "r") as fh:
+#             old_hash = fh.read().strip()
+#     if new_hash == old_hash:
+#         return False
+#     with open(hash_path, "w") as fh:
+#         fh.write(new_hash)
+#     return True
 
-def extract_text(pdf_path=PDF_PATH):
-    text = ""
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            text += (page.extract_text() or "") + "\n"
-    return text
+# def extract_text(pdf_path=PDF_PATH):
+#     text = ""
+#     with pdfplumber.open(pdf_path) as pdf:
+#         for page in pdf.pages:
+#             text += (page.extract_text() or "") + "\n"
+#     return text
 
 # ====== PARSING ======
 def parse_schedule(text, team_name=TEAM_NAME):
