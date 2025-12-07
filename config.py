@@ -13,7 +13,7 @@ ENABLE_LOGGING = True
 
 PAGE_URL = "https://kvapack.ca/adult-indoor/"
 TEAM_NAME = "Chewblockas"
-KEYWORD = "Wednesday Night"
+KEYWORD = "wednesday night"
 
 # Ensure folders exist
 for folder in (CACHE_DIR, PDF_DIR, LOG_DIR):
