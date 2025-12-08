@@ -83,91 +83,91 @@ from utils import log, to_24h_str
 #     return text
 
 # ====== PARSING ======
-def parse_schedule(text, team_name=TEAM_NAME):
-    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
-    events = []
-    current_date = None
-    current_gym = None
+# def parse_schedule(text, team_name=TEAM_NAME):
+#     lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+#     events = []
+#     current_date = None
+#     current_gym = None
 
-    i = 0
-    while i < len(lines):
-        line = lines[i]
+#     i = 0
+#     while i < len(lines):
+#         line = lines[i]
 
-        # detect gym
-        for gym in GYMS:
-            if line.startswith(gym):
-                current_gym = gym
-                break
+#         # detect gym
+#         for gym in GYMS:
+#             if line.startswith(gym):
+#                 current_gym = gym
+#                 break
 
-        # detect date
-        date_match = re.search(r"([A-Z][a-z]+ \d{1,2}, \d{4})", line)
-        if date_match:
-            try:
-                current_date = datetime.strptime(date_match.group(1), "%B %d, %Y").date()
-            except:
-                current_date = None
-            i += 1
-            continue
+#         # detect date
+#         date_match = re.search(r"([A-Z][a-z]+ \d{1,2}, \d{4})", line)
+#         if date_match:
+#             try:
+#                 current_date = datetime.strptime(date_match.group(1), "%B %d, %Y").date()
+#             except:
+#                 current_date = None
+#             i += 1
+#             continue
 
-        # detect pool section
-        pool_found = None
-        for pool in POOLS:
-            if line.startswith(pool):
-                pool_found = pool
-                break
+#         # detect pool section
+#         pool_found = None
+#         for pool in POOLS:
+#             if line.startswith(pool):
+#                 pool_found = pool
+#                 break
 
-        if pool_found:
-            current_pool = pool_found
-            block_lines = []
-            j = i + 1
-            while j < len(lines):
-                nxt = lines[j]
-                if any(nxt.startswith(x) for x in POOLS + GYMS) or \
-                   re.search(r"[A-Z][a-z]+ \d{1,2}, 2025", nxt):
-                    break
-                block_lines.append(nxt)
-                j += 1
+#         if pool_found:
+#             current_pool = pool_found
+#             block_lines = []
+#             j = i + 1
+#             while j < len(lines):
+#                 nxt = lines[j]
+#                 if any(nxt.startswith(x) for x in POOLS + GYMS) or \
+#                    re.search(r"[A-Z][a-z]+ \d{1,2}, 2025", nxt):
+#                     break
+#                 block_lines.append(nxt)
+#                 j += 1
 
-            # extract time
-            time_pat = re.compile(r"(\d{1,2}:\d{2})-(\d{1,2}:\d{2})")
-            pool_time = None
-            for bl in block_lines:
-                m = time_pat.search(bl)
-                if m:
-                    pool_time = f"{m.group(1)}-{m.group(2)}"
-                    break
+#             # extract time
+#             time_pat = re.compile(r"(\d{1,2}:\d{2})-(\d{1,2}:\d{2})")
+#             pool_time = None
+#             for bl in block_lines:
+#                 m = time_pat.search(bl)
+#                 if m:
+#                     pool_time = f"{m.group(1)}-{m.group(2)}"
+#                     break
 
-            # extract teams
-            teams = []
-            for bl in block_lines:
-                m = re.match(r"^\s*(\d+)\s+(.*)$", bl)
-                if m:
-                    name_part = m.group(2)
-                    name_part = time_pat.sub("", name_part).strip()
-                    name_part = re.sub(r"\s+", " ", name_part)
-                    teams.append({"num": m.group(1), "name": name_part})
+#             # extract teams
+#             teams = []
+#             for bl in block_lines:
+#                 m = re.match(r"^\s*(\d+)\s+(.*)$", bl)
+#                 if m:
+#                     name_part = m.group(2)
+#                     name_part = time_pat.sub("", name_part).strip()
+#                     name_part = re.sub(r"\s+", " ", name_part)
+#                     teams.append({"num": m.group(1), "name": name_part})
 
-            # build event
-            if pool_time and current_date:
-                start_raw, end_raw = pool_time.split("-")
-                start_dt = datetime.strptime(f"{current_date} {to_24h_str(start_raw)}", "%Y-%m-%d %H:%M")
-                end_dt   = datetime.strptime(f"{current_date} {to_24h_str(end_raw)}", "%Y-%m-%d %H:%M")
+#             # build event
+#             if pool_time and current_date:
+#                 start_raw, end_raw = pool_time.split("-")
+#                 start_dt = datetime.strptime(f"{current_date} {to_24h_str(start_raw)}", "%Y-%m-%d %H:%M")
+#                 end_dt   = datetime.strptime(f"{current_date} {to_24h_str(end_raw)}", "%Y-%m-%d %H:%M")
 
-                for t in teams:
-                    if t["name"].lower() == team_name.lower():
-                        events.append({
-                            "summary": f"{team_name} Volleyball",
-                            "description": f"Gym: {current_gym}, Pool: {current_pool}",
-                            "start": start_dt,
-                            "end":   end_dt
-                        })
+#                 for t in teams:
+#                     if t["name"].lower() == team_name.lower():
+#                         events.append({
+#                             "summary": f"{team_name} Volleyball",
+#                             "description": f"Gym: {current_gym}, Pool: {current_pool}",
+#                             "start": start_dt,
+#                             "end":   end_dt
+#                         })
 
-            i = j
-            continue
+#             i = j
+#             continue
 
-        i += 1
+#         i += 1
 
-    return events
+#     return events
 
 # ====== CALDAV / ICLOUD ======
 def add_events_to_calendar(events):
@@ -216,7 +216,7 @@ def send_email(events=None):
 
     msg.set_content(body)
     msg["From"] = from_email_addr
-    msg["To"] = to_email_addr
+    msg["To"] = ", ".join(to_email_addr)
     msg["Subject"] = "KVA Schedule Updated"
 
     # attach PDF
@@ -232,14 +232,14 @@ def send_email(events=None):
 
 # ====== MAIN ======
 def main():
-    pdf_url = get_wednesday_pdf_url()
-    if not pdf_url:
-        return
+   # pdf_url = get_wednesday_pdf_url()
+    # if not pdf_url:
+    #     return
 
-    download_pdf(pdf_url)
+    # download_pdf(pdf_url)
 
-    if not has_pdf_changed():
-        return
+    # if not has_pdf_changed():
+        # return
 
     log(f"Schedule changed, sending email")
 

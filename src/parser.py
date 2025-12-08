@@ -22,6 +22,7 @@ class ScheduleParser:
         self.current_date = None
         self.current_gym = None
         self.current_pool = None
+        self.uid = None
 
     def _normalize_lines(self, text):
         # keep original casing, just strip empty lines
@@ -34,6 +35,7 @@ class ScheduleParser:
 
         try:
             self.current_date = datetime.strptime(date_match.group(1), "%B %d, %Y").date()
+            self.uid = self.current_date.strftime("%Y%m%d")
             return True
         except ValueError:
             return None
@@ -128,6 +130,7 @@ class ScheduleParser:
                     for t in teams:
                         if t["name"].lower() == self.team_name.lower():
                             self.events.append({
+                                "uid": f"{self.uid}",
                                 "summary": f"{self.team_name} Volleyball",
                                 "description": f"Gym: {self.current_gym}, Pool: {self.current_pool}",
                                 "start": start_dt,
