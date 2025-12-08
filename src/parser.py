@@ -1,16 +1,17 @@
-from config import TEAM_NAME, GYMS, POOLS
+from config import TEAM_NAME, GYMS, POOLS, TIME_FORMAT
 import re
 from datetime import datetime
 
 
-class ScheduleParser():
-    def __init__(self, 
+class ScheduleParser:
+    def __init__(
+        self,
         text,
         team_name=TEAM_NAME,
         gyms=GYMS,
         pools=POOLS,
-        ):
-        self.text = text
+    ):
+        self.text = text  # keep original casing
         self.lines = self._normalize_lines(text)
         self.events = []
 
@@ -23,32 +24,31 @@ class ScheduleParser():
         self.current_pool = None
 
     def _normalize_lines(self, text):
+        # keep original casing, just strip empty lines
         return [ln.strip() for ln in text.splitlines() if ln.strip()]
 
     def detect_date(self, line):
         date_match = re.search(r"([A-Z][a-z]+ \d{1,2}, \d{4})", line)
         if not date_match:
             return None
-        
-        from datetime import datetime
+
         try:
             self.current_date = datetime.strptime(date_match.group(1), "%B %d, %Y").date()
             return True
         except ValueError:
             return None
-    
-    
+
     def detect_gym(self, line):
         for gym in self.gyms:
-            if line.startswith(gym):
-                self.current_gym = gym
+            if line.lower().startswith(gym.lower()):
+                self.current_gym = gym  # preserve original casing
                 return True
         return False
-    
+
     def detect_pool(self, line):
         for pool in self.pools:
-            if line.startswith(pool):
-                self.current_pool = pool
+            if line.lower().startswith(pool.lower()):
+                self.current_pool = pool  # preserve original casing
                 return True
         return False
 
@@ -75,7 +75,6 @@ class ScheduleParser():
             m = time_pat.search(ln)
             if m:
                 return m.group(1), m.group(2)
-        
         return None, None
 
     def extract_teams(self, block_lines):
@@ -92,10 +91,7 @@ class ScheduleParser():
                     "num": m.group(1),
                     "name": name
                 })
-
         return teams
-
-
 
     def parse(self):
         i = 0
@@ -121,11 +117,11 @@ class ScheduleParser():
                 # build events only if valid
                 if start_raw and end_raw and self.current_date:
                     start_dt = datetime.strptime(
-                        f"{self.current_date} {start_raw}", 
+                        f"{self.current_date} {start_raw}",
                         "%Y-%m-%d %H:%M"
                     )
                     end_dt = datetime.strptime(
-                        f"{self.current_date} {end_raw}", 
+                        f"{self.current_date} {end_raw}",
                         "%Y-%m-%d %H:%M"
                     )
 
@@ -133,9 +129,7 @@ class ScheduleParser():
                         if t["name"].lower() == self.team_name.lower():
                             self.events.append({
                                 "summary": f"{self.team_name} Volleyball",
-                                "description": (
-                                    f"Gym: {self.current_gym}, Pool: {self.current_pool}"
-                                ),
+                                "description": f"Gym: {self.current_gym}, Pool: {self.current_pool}",
                                 "start": start_dt,
                                 "end": end_dt,
                             })
@@ -146,4 +140,3 @@ class ScheduleParser():
             i += 1
 
         return self.events
-

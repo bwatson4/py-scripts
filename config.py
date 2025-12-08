@@ -25,6 +25,9 @@ LOG_FILE = LOG_DIR / "cron_log.txt"
 PDF_FILE = PDF_DIR / "schedule.pdf"
 PDF_HASH_FILE = PDF_DIR / "schedule.hash"
 
+#set to 12 hour if times are in 12 hour format and pm
+#set to 24 hour if times are in 24 hour format, or times are known to be am
+TIME_FORMAT = "12 Hour"  # or "24 Hour"
 
 
 # iCloud credentials

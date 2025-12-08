@@ -1,4 +1,4 @@
-from config import LOG_FILE, ENABLE_LOGGING
+from config import LOG_FILE, ENABLE_LOGGING, TIME_FORMAT
 from datetime import datetime
 
 def log(msg):
@@ -7,7 +7,11 @@ def log(msg):
             f.write(f"{datetime.now()}: {msg}\n")
 
 def to_24h_str(tstr):
-    h, m = map(int, tstr.split(":"))
-    if h < 12:
-        h += 12
-    return f"{h:02d}:{m:02d}"
+    if TIME_FORMAT == "12 hour":
+        h, m = map(int, tstr.split(":"))
+        if h < 12:
+            h += 12
+        return f"{h:02d}:{m:02d}"
+    else:
+        return tstr
+    

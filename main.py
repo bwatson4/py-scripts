@@ -8,7 +8,6 @@ def main():
     log("Script started")
 
     fetcher = PDFFetcher()
-    # parser = ScheduleParser()
     # calendar = ICloudCalendar()
     # mailer = Emailer()
 
@@ -17,8 +16,9 @@ def main():
         return
     
     log(f"Schedule changed, sending email")
-    
-    print(fetcher.text)
+    parser = ScheduleParser(text=fetcher.text)
+    event = parser.parse()
+    print(event)
 
     # events = parser.parse(text)
 
