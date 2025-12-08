@@ -1,5 +1,5 @@
 from src.fetcher import PDFFetcher
-# from parser.schedule_parser import ScheduleParser
+from src.parser import ScheduleParser
 # from calendar.ical_client import ICloudCalendar
 # from notifier.emailer import Emailer
 from utils import log
@@ -12,15 +12,14 @@ def main():
     # calendar = ICloudCalendar()
     # mailer = Emailer()
 
-    fetcher.get_pdf_url()
-    fetcher.download_pdf()
+    if not fetcher.fetch():
+        log("No new PDF found")
+        return
+    
+    log(f"Schedule changed, sending email")
+    
+    print(fetcher.text)
 
-    # if not fetcher.has_changed():
-    #     return
-
-    # log("Schedule changed — processing")
-
-    # text = fetcher.extract_text()
     # events = parser.parse(text)
 
     # if events:
