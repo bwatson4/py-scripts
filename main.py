@@ -1,30 +1,33 @@
 from src.fetcher import PDFFetcher
 from src.parser import ScheduleParser
 from src.calendar import CalendarManager
-# from notifier.emailer import Emailer
+from src.emailer import EmailSender
 from utils import log
+from config import TEAM_NAME
 
 def main():
     log("Script started")
 
     fetcher = PDFFetcher()
     calendar = CalendarManager()
-    # mailer = Emailer()
+    mailer = EmailSender()
 
     if not fetcher.fetch():
         log("No new PDF found")
         return
     
-    log(f"Schedule changed, sending email")
+    log("New pdf, checking for new event details")
     parser = ScheduleParser(text=fetcher.text)
     event = parser.parse()
-    
 
     if event:
+        log("Adding/updating event in calendar")
         calendar.add_or_update_events(event)
     else:
-        log("No events parsed from schedule")
-    # mailer.send(events if events else None)
+        log(f"No events found for team {TEAM_NAME}")
+
+    log("Sending email notification")
+    mailer.send(event if event else None)
 
 
 if __name__ == "__main__":

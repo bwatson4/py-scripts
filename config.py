@@ -9,7 +9,8 @@ PDF_DIR = BASE_DIR / "pdfs"
 LOG_DIR = BASE_DIR / "logs"
 
 # App settings
-ENABLE_LOGGING = True
+# ENABLE_LOGGING = True
+ENABLE_LOGGING = False
 
 PAGE_URL = "https://kvapack.ca/adult-indoor/"
 TEAM_NAME = "Chewblockas"

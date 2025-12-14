@@ -74,6 +74,7 @@ class CalendarManager:
             ev = Event()
             ev.add("uid", event_data["uid"])
             ev.add("summary", event_data["summary"])
+            log(f"Adding new event to calendar: {event_data['summary']}")
             ev.add("description", event_data["description"])
             ev.add("dtstart", event_data["start"])
             ev.add("dtend", event_data["end"])
