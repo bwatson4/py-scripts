@@ -75,5 +75,5 @@ def test_parse_case_insensitive():
     
     assert event["summary"] == "WATCH MY 6 Volleyball"
     assert event["description"] == "Gym: VALLEYVIEW SS, Pool: A POOL"
-    assert event["start"] == datetime(2025, 12, 3, 8, 0)
-    assert event["end"] == datetime(2025, 12, 3, 9, 45)
+    assert event["start"] == datetime(2025, 12, 3, 20, 0)
+    assert event["end"] == datetime(2025, 12, 3, 21, 45)

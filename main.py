@@ -21,8 +21,9 @@ def main():
     
 
     if event:
-        calendar.add_or_update_event(event)
-
+        calendar.add_or_update_events(event)
+    else:
+        log("No events parsed from schedule")
     # mailer.send(events if events else None)
 
 

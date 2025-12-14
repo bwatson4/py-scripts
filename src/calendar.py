@@ -2,6 +2,7 @@ from caldav import DAVClient
 from icalendar import Calendar, Event, Alarm
 from datetime import timedelta
 from config import ICLOUD_USERNAME, ICLOUD_APP_PASSWORD, CALENDAR_INDEX
+from utils import log
 
 class CalendarManager:
     def __init__(self, username=ICLOUD_USERNAME, password=ICLOUD_APP_PASSWORD, calendar_index=CALENDAR_INDEX, client=None, calendar=None):
@@ -34,6 +35,11 @@ class CalendarManager:
             'end': datetime
         }
         """
+        if not isinstance(event_data, dict):
+            raise TypeError(
+                "add_or_update_event expects a single event dict. "
+                "For multiple events, use add_or_update_events()."
+            )
         existing_event = None
         for ev in self.calendar.events():
             cal = ev.vobject_instance
@@ -43,6 +49,7 @@ class CalendarManager:
                 break
 
         if existing_event:
+            log(f"Updating existing event: {event_data['summary']}")
             cal = existing_event.vobject_instance
             cal.vevent.summary.value = event_data["summary"]
             cal.vevent.description.value = event_data["description"]
@@ -55,11 +62,11 @@ class CalendarManager:
                 alarm.description.value = f"Upcoming: {event_data['summary']}"
                 alarm.trigger.value = timedelta(minutes=-30)
             else:
-                alarm = Alarm()
-                alarm.add("action", "DISPLAY")
-                alarm.add("description", f"Upcoming: {event_data['summary']}")
-                alarm.add("trigger", timedelta(minutes=-30))
-                cal.vevent.add_component(alarm)
+                alarm = cal.vevent.add('valarm')
+                alarm.add('action').value = 'DISPLAY'
+                alarm.add('description').value = f"Upcoming: {event_data['summary']}"
+                alarm.add('trigger').value = timedelta(minutes=-30)
+
 
             existing_event.save()
         else:

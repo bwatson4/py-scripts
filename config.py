@@ -13,6 +13,7 @@ ENABLE_LOGGING = True
 
 PAGE_URL = "https://kvapack.ca/adult-indoor/"
 TEAM_NAME = "Chewblockas"
+# KEYWORD = "tuesday night"
 KEYWORD = "wednesday night"
 
 # Ensure folders exist

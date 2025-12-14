@@ -1,33 +1,33 @@
 # tests/test_calendar.py
 import pytest
-from unittest.mock import MagicMock, patch
-from datetime import datetime, timedelta
-from icalendar import Calendar, Event, Alarm
-from src.calendar import CalendarManager  # adjust import if needed
+from unittest.mock import MagicMock
+from datetime import datetime
+from src.calendar import CalendarManager
+
 
 @pytest.fixture
-def mock_caldav():
-    """Mock DAVClient and calendar structure"""
-    with patch("src.calendar.DAVClient") as mock_client:
-        # Mock the principal and calendars
-        mock_principal = MagicMock()
-        mock_calendar = MagicMock()
+def mock_calendar_with_existing_event():
+    calendar = MagicMock()
 
-        # Mock an existing event
-        mock_event = MagicMock()
-        mock_event.vobject_instance = MagicMock()
-        mock_event.vobject_instance.vevent.uid.value = "existing-uid"
-        mock_event.vobject_instance.vevent.valarms = []
+    existing_event = MagicMock()
+    existing_event.vobject_instance = MagicMock()
+    existing_event.vobject_instance.vevent.uid.value = "existing-uid"
+    existing_event.vobject_instance.vevent.valarms = []
 
-        # calendar.events() returns a list with one existing event
-        mock_calendar.events.return_value = [mock_event]
-        mock_principal.calendars.return_value = [mock_calendar]
-        mock_client.return_value.principal.return_value = mock_principal
+    calendar.events.return_value = [existing_event]
 
-        yield mock_client, mock_principal, mock_calendar, mock_event
+    return calendar, existing_event
 
-def test_add_single_event(mock_caldav):
-    _, _, mock_calendar, _ = mock_caldav
+
+@pytest.fixture
+def empty_mock_calendar():
+    calendar = MagicMock()
+    calendar.events.return_value = []
+    return calendar
+
+
+def test_add_new_event(empty_mock_calendar):
+    cm = CalendarManager(client=MagicMock(), calendar=empty_mock_calendar)
 
     event = {
         "uid": "new-uid",
@@ -37,33 +37,31 @@ def test_add_single_event(mock_caldav):
         "end": datetime(2025, 12, 7, 11, 0),
     }
 
-    cm = CalendarManager(event)
-    cm.add_or_update_event()
+    cm.add_or_update_event(event)
 
-    # Should call add_event once for the new event
-    assert mock_calendar.add_event.call_count == 1
+    empty_mock_calendar.add_event.assert_called_once()
 
-def test_update_existing_event(mock_caldav):
-    _, _, mock_calendar, mock_event = mock_caldav
+
+def test_update_existing_event(mock_calendar_with_existing_event):
+    calendar, existing_event = mock_calendar_with_existing_event
+    cm = CalendarManager(client=MagicMock(), calendar=calendar)
 
     event = {
-        "uid": "existing-uid",  # matches the mocked existing event
+        "uid": "existing-uid",
         "summary": "Updated Event",
         "description": "Updated description",
         "start": datetime(2025, 12, 7, 12, 0),
         "end": datetime(2025, 12, 7, 13, 0),
     }
 
-    cm = CalendarManager(event)
-    cm.add_or_update_event()
+    cm.add_or_update_event(event)
 
-    # Save should be called on the existing event
-    mock_event.save.assert_called_once()
-    # No new event should be added
-    mock_calendar.add_event.assert_not_called()
+    existing_event.save.assert_called_once()
+    calendar.add_event.assert_not_called()
 
-def test_add_multiple_events(mock_caldav):
-    _, _, mock_calendar, _ = mock_caldav
+
+def test_add_multiple_events(empty_mock_calendar):
+    cm = CalendarManager(client=MagicMock(), calendar=empty_mock_calendar)
 
     events = [
         {
@@ -82,14 +80,13 @@ def test_add_multiple_events(mock_caldav):
         },
     ]
 
-    cm = CalendarManager(events)
-    cm.add_or_update_event()
+    cm.add_or_update_events(events)
 
-    # Two new events should be added
-    assert mock_calendar.add_event.call_count == 2
+    assert empty_mock_calendar.add_event.call_count == 2
 
-def test_add_or_update_accepts_single_dict(mock_caldav):
-    _, _, mock_calendar, _ = mock_caldav
+
+def test_add_or_update_accepts_single_dict(empty_mock_calendar):
+    cm = CalendarManager(client=MagicMock(), calendar=empty_mock_calendar)
 
     event = {
         "uid": "uid-single",
@@ -99,8 +96,6 @@ def test_add_or_update_accepts_single_dict(mock_caldav):
         "end": datetime(2025, 12, 7, 15, 0),
     }
 
-    cm = CalendarManager(event)
-    # Should still work if a single dict is passed
-    cm.add_or_update_event()
+    cm.add_or_update_events(event)
 
-    assert mock_calendar.add_event.call_count == 1
+    empty_mock_calendar.add_event.assert_called_once()
