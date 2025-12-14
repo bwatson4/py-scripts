@@ -1,5 +1,8 @@
+# ignore all txt files and log files
 *.txt
 *.log
+# Except for requirements.txt
+!requirements.txt
 schedule
 schedule.hash
 schedule.pdf
