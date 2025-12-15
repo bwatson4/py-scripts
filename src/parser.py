@@ -119,6 +119,7 @@ class ScheduleParser:
                 continue
 
             if self.detect_pool(line):
+                pool_for_block = self.current_pool  # capture the pool here
                 block, next_i = self.extract_block(i)
 
                 start_raw, end_raw = self.extract_time(block)
@@ -144,7 +145,7 @@ class ScheduleParser:
                                 "summary": f"{self.team_name} Volleyball",
                                 "description": (
                                     f"Gym: {self.current_gym}, "
-                                    f"Pool: {self.current_pool}"
+                                    f"Pool: {pool_for_block}"  # use captured pool
                                 ),
                                 "start": start_dt,
                                 "end": end_dt,
